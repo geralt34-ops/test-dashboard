@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Dashboard 800x480</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #000;
+      color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .app {
+      width: 800px;
+      height: 480px;
+      background: #111;
+      border-radius: 16px;
+      border: 1px solid #333;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .header-right {
+      text-align: right;
+      font-size: 12px;
+      color: #ddd;
+    }
+
+    .time {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 11px;
+      color: #888;
+      height: 14px;
+      margin-bottom: 4px;
+    }
+
+    .content {
+      display: flex;
+      flex: 1;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .column-left {
+      flex: 1.4;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .column-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .card {
+      background: #181818;
+      border-radius: 12px;
+      border: 1px solid #262626;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .card-body {
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    /* NEWS LIST */
+    #newsList {
+      max-height: 100%;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .news-item {
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px dotted #333;
+    }
+
+    .news-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fdfdfd;
+      text-decoration: none;
+    }
+
+    .news-title:hover {
+      text-decoration: underline;
+    }
+
+    .news-meta {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    /* CRYPTO */
+    .crypto-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .crypto-symbol {
+      font-weight: 600;
+    }
+
+    .crypto-price {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    /* WEATHER */
+    .weather-today {
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .weather-days {
+      display: flex;
+      gap: 4px;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .weather-day {
+      flex: 1;
+      text-align: center;
+    }
+
+    .weather-temp {
+      font-weight: 600;
+    }
+
+    .footer {
+      margin-top: 4px;
+      font-size: 10px;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-refresh {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #444;
+      background: #222;
+      color: #eee;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    .btn-refresh:active {
+      transform: scale(0.97);
+    }
+
+    #newsList::-webkit-scrollbar {
+      width: 4px;
+    }
+    #newsList::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 999px;
+    }
+    #newsList::-webkit-scrollbar-track {
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div>
+        <div class="header-title">Smart Dashboard</div>
+        <div class="header-subtitle">Google News RSS • BTC/ETH • Pogoda Bojano</div>
+      </div>
+      <div class="header-right">
+        <div class="time" id="timeNow">--:--</div>
+        <div id="dateNow">--</div>
+      </div>
+    </div>
+
+    <div class="status" id="statusBar"></div>
+
+    <div class="content">
+      <!-- LEWA KOLUMNA – NEWSY -->
+      <div class="column-left card">
+        <div class="card-header">
+          <span class="card-title">Google News (PL)</span>
+          <span>Top 5</span>
+        </div>
+        <div class="card-body" id="newsList"></div>
+      </div>
+
+      <!-- PRAWA KOLUMNA – KRYPTO + POGODA -->
+      <div class="column-right">
+        <!-- KRYPTO -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Kryptowaluty</span>
+            <span>
+              <button class="btn-refresh" id="btnRefreshCrypto">Odśwież</button>
+            </span>
+          </div>
+          <div class="card-body" id="cryptoBox">
+            Ładowanie cen...
+          </div>
+        </div>
+
+        <!-- POGODA -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Pogoda</span>
+            <span id="weatherLocation">Bojano</span>
+          </div>
+          <div class="card-body" id="weatherBox">
+            Ładowanie pogody...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span id="lastUpdate">Ostatnia aktualizacja: —</span>
+      <span>800×480 • simple mode</span>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // KONFIG – API
+    // ==============================
+
+    // NEWS – Twój Apps Script (RSS→JSON)
+    const NEWS_API_URL =
+      "https://script.google.com/macros/s/AKfycbx7447DvFQwHkBpUAqd4L6Rlea9DuLchPVCRU8UXmE2deUjUjDRsPQgSn2hZJC6Kzo/exec";
+
+    // KRYPTO – CoinGecko (BTC/ETH w PLN + USD)
+    const CRYPTO_API_URL =
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,pln";
+
+    // POGODA – Open-Meteo dla Bojano (54.4712 N, 18.3841 E)
+    const WEATHER_API_URL =
+      "https://api.open-meteo.com/v1/forecast?latitude=54.4712&longitude=18.3841&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto";
+
+    const statusBar = document.getElementById("statusBar");
+    const newsListEl = document.getElementById("newsList");
+    const cryptoBox = document.getElementById("cryptoBox");
+    const weatherBox = document.getElementById("weatherBox");
+    const lastUpdateEl = document.getElementById("lastUpdate");
+    const btnRefreshCrypto = document.getElementById("btnRefreshCrypto");
+
+    // ==============================
+    // ZEGAR
+    // ==============================
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("timeNow").textContent = now.toLocaleTimeString("pl-PL", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      document.getElementById("dateNow").textContent = now.toLocaleDateString("pl-PL", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit"
+      });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ==============================
+    // NEWS
+    // ==============================
+    async function loadNews() {
+      try {
+        statusBar.textContent = "Ładowanie newsów...";
+        const res = await fetch(NEWS_API_URL);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        const items = Array.isArray(data) ? data : [];
+
+        newsListEl.innerHTML = "";
+        if (!items.length) {
+          newsListEl.textContent = "Brak newsów.";
+          statusBar.textContent = "";
+          return;
+        }
+
+        items.slice(0, 5).forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "news-item";
+
+          const a = document.createElement("a");
+          a.className = "news-title";
+          a.textContent = item.title || "Bez tytułu";
+          a.href = item.link || "#";
+          a.target = "_blank";
+          a.rel = "noopener";
+
+          const meta = document.createElement("div");
+          meta.className = "news-meta";
+
+          const src = item.source || "";
+          const dateStr = formatNewsDate(item.pubDate);
+
+          meta.textContent = [src, dateStr].filter(Boolean).join(" • ");
+
+          div.appendChild(a);
+          div.appendChild(meta);
+          newsListEl.appendChild(div);
+        });
+
+        statusBar.textContent = "";
+      } catch (e) {
+        console.error(e);
+        statusBar.textContent = "Błąd ładowania newsów.";
+        newsListEl.textContent = "Nie udało się pobrać newsów.";
+      }
+    }
+
+    function formatNewsDate(v) {
+      if (!v) return "";
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleTimeString("pl-PL", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    // ==============================
+    // KRYPTO – CoinGecko
+    // ==============================
+    async function loadCrypto() {
+      try {
+        cryptoBox.textContent = "Ładowanie cen...";
+        const res = await fetch(CRYPTO_API_URL);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        const btc = data.bitcoin || {};
+        const eth = data.ethereum || {};
+
+        const btcPln = btc.pln != null ? btc.pln.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) : "–";
+        const btcUsd = btc.usd != null ? btc.usd.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) : "–";
+
+        const ethPln = eth.pln != null ? eth.pln.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) : "–";
+        const ethUsd = eth.usd != null ? eth.usd.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) : "–";
+
+        cryptoBox.innerHTML = `
+          <div class="crypto-row">
+            <div><span class="crypto-symbol">BTC</span></div>
+            <div class="crypto-price">${btcPln} zł • ${btcUsd} $</div>
+          </div>
+          <div class="crypto-row">
+            <div><span class="crypto-symbol">ETH</span></div>
+            <div class="crypto-price">${ethPln} zł • ${ethUsd} $</div>
+          </div>
+        `;
+      } catch (e) {
+        console.error(e);
+        cryptoBox.textContent = "Błąd ładowania cen krypto.";
+      }
+    }
+
+    btnRefreshCrypto.addEventListener("click", loadCrypto);
+
+    // ==============================
+    // POGODA – Open-Meteo
+    // ==============================
+    function describeWeather(code) {
+      const map = {
+        0: "Słonecznie",
+        1: "Przeważnie słonecznie",
+        2: "Częściowe zachmurzenie",
+        3: "Pochmurno",
+        45: "Mgła",
+        48: "Mgła osadzająca szadź",
+        51: "Mżawka słaba",
+        53: "Mżawka umiarkowana",
+        55: "Mżawka intensywna",
+        61: "Deszcz słaby",
+        63: "Deszcz umiarkowany",
+        65: "Deszcz mocny",
+        71: "Śnieg słaby",
+        73: "Śnieg umiarkowany",
+        75: "Śnieg intensywny",
+        80: "Przelotne opady słabe",
+        81: "Przelotne opady umiarkowane",
+        82: "Przelotne opady silne",
+        95: "Burza",
+        96: "Burza z gradem",
+        99: "Silna burza z gradem"
+      };
+      return map[code] || "Pogoda";
+    }
+
+    async function loadWeather() {
+      try {
+        weatherBox.textContent = "Ładowanie pogody...";
+        const res = await fetch(WEATHER_API_URL);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        const current = data.current_weather || {};
+        const daily = data.daily || {};
+
+        const times = daily.time || [];
+        const tMax = daily.temperature_2m_max || [];
+        const tMin = daily.temperature_2m_min || [];
+        const wCodes = daily.weathercode || [];
+
+        let html = "";
+
+        if (current && typeof current.temperature === "number") {
+          html += `
+            <div class="weather-today">
+              Dziś: <span class="weather-temp">${current.temperature.toFixed(1)}°C</span>
+              • ${describeWeather(current.weathercode)}
+              • wiatr ${current.windspeed != null ? current.windspeed.toFixed(0) + " km/h" : ""}
+            </div>
+          `;
+        }
+
+        if (times.length) {
+          html += `<div class="weather-days">`;
+          for (let i = 1; i < Math.min(times.length, 5); i++) {
+            const d = new Date(times[i]);
+            const dayLabel = d.toLocaleDateString("pl-PL", { weekday: "short" });
+            const max = tMax[i] != null ? tMax[i].toFixed(0) : "–";
+            const min = tMin[i] != null ? tMin[i].toFixed(0) : "–";
+            const desc = describeWeather(wCodes[i]);
+
+            html += `
+              <div class="weather-day">
+                <div>${dayLabel}</div>
+                <div class="weather-temp">${max}° / ${min}°</div>
+                <div>${desc}</div>
+              </div>
+            `;
+          }
+          html += `</div>`;
+        }
+
+        weatherBox.innerHTML = html || "Brak danych pogodowych.";
+      } catch (e) {
+        console.error(e);
+        weatherBox.textContent = "Błąd ładowania pogody.";
+      }
+    }
+
+    // ==============================
+    // INIT + AUTO REFRESH
+    // ==============================
+    async function initAll() {
+      await Promise.all([loadNews(), loadCrypto(), loadWeather()]);
+      const now = new Date();
+      lastUpdateEl.textContent =
+        "Ostatnia aktualizacja: " +
+        now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    initAll();
+
+    setInterval(() => {
+      loadNews();
+      loadWeather();
+      const now = new Date();
+      lastUpdateEl.textContent =
+        "Ostatnia aktualizacja: " +
+        now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    }, 10 * 60 * 1000);
+
+    setInterval(loadCrypto, 60 * 1000);
+  </script>
+</body>
+</html>
